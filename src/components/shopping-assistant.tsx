@@ -25,6 +25,7 @@ import { VoiceRecorder } from '@/components/voice-recorder';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from './icons';
 import { Skeleton } from './ui/skeleton';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 type Step = 'initial' | 'loadingRecipes' | 'showRecipes' | 'loadingList' | 'showList' | 'error';
 
@@ -34,6 +35,7 @@ export function ShoppingAssistant() {
   const [numberOfPeople, setNumberOfPeople] = useState('4');
   const [budget, setBudget] = useState('25');
   const [suggestedRecipes, setSuggestedRecipes] = useState<SuggestedRecipes | null>(null);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [finalList, setFinalList] = useState<FinalShoppingList | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +68,7 @@ export function ShoppingAssistant() {
   };
 
   const handleSelectRecipe = async (recipe: Recipe) => {
+    setSelectedRecipe(recipe);
     setStep('loadingList');
     setError(null);
     const result = await handleGetShoppingList(recipe.ingredients, parseInt(budget));
@@ -82,6 +85,7 @@ export function ShoppingAssistant() {
     setStep('initial');
     setUserInput('');
     setSuggestedRecipes(null);
+    setSelectedRecipe(null);
     setFinalList(null);
     setError(null);
   };
@@ -194,6 +198,25 @@ export function ShoppingAssistant() {
           <RefreshCw className="mr-2 h-4 w-4" /> Start Over
         </Button>
       </div>
+
+      {selectedRecipe && (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-3xl flex items-center gap-2"><ChefHat/>{selectedRecipe.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Accordion type="single" collapsible defaultValue="instructions">
+                    <AccordionItem value="instructions">
+                        <AccordionTrigger className="font-headline text-xl">Cooking Instructions</AccordionTrigger>
+                        <AccordionContent className="prose prose-sm dark:prose-invert whitespace-pre-line text-base">
+                            {selectedRecipe.instructions}
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </CardContent>
+        </Card>
+      )}
+
       <Card className="bg-primary/10 border-primary">
           <CardHeader>
               <CardTitle className="font-headline text-2xl flex items-center gap-2"><Wallet/>Budget Summary</CardTitle>
@@ -272,3 +295,5 @@ export function ShoppingAssistant() {
     </div>
   );
 }
+
+    
