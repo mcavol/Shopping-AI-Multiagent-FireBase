@@ -53,10 +53,10 @@ const prompt = ai.definePrompt({
 
   Shopping List:
   {{#each shoppingList}}
-  - Product: {{this.productName}}, Price: {{#if this.price}}${{this.price}}{{else}}Price not available{{/if}}
+  - Product: {{productName}}, Price: \${{price}}
   {{/each}}
 
-  Budget: \${{{budget}}}
+  Budget: \${{budget}}
 
   Output the estimated shopping list with prices, the source of the price (Walmart or 2025 estimate), the total estimated cost, and whether the list adheres to the budget, alongside any suggestions on what to remove.`,
 });
