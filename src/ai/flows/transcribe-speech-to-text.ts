@@ -14,7 +14,7 @@ const TranscribeSpeechToTextInputSchema = z.object({
   audioDataUri: z
     .string()
     .describe(
-      "A data URI containing the audio to transcribe, that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>' for example data:audio/webm;base64,YWFh'
+      "A data URI containing the audio to transcribe, that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>' for example data:audio/webm;base64,YWFh"
     ),
 });
 export type TranscribeSpeechToTextInput = z.infer<typeof TranscribeSpeechToTextInputSchema>;
