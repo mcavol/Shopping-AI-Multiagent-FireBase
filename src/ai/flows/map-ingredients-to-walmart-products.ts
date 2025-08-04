@@ -36,9 +36,9 @@ export async function mapIngredientsToWalmartProducts(input: MapIngredientsToWal
 
 const getWalmartProducts = ai.defineTool({
   name: 'getWalmartProducts',
-  description: 'Retrieves products from Walmart based on a search query.',
+  description: 'Retrieves products from Walmart based on a search query for one or more ingredients.',
   inputSchema: z.object({
-    query: z.string().describe('The search query to use to find products.'),
+    queries: z.array(z.string()).describe('The search queries to use to find products.'),
   }),
   outputSchema: z.array(
     z.object({
@@ -53,26 +53,31 @@ const getWalmartProducts = ai.defineTool({
   if (!apiKey) {
     throw new Error('SerpAPI API key is not set.');
   }
-  const response = await fetch(`https://serpapi.com/search.json?engine=walmart&query=${encodeURIComponent(input.query)}&api_key=${apiKey}`);
-  const data = await response.json();
 
-  if (!data.products) {
-    return [];
+  const allProducts: any[] = [];
+  for (const query of input.queries) {
+    const response = await fetch(`https://serpapi.com/search.json?engine=walmart&query=${encodeURIComponent(query)}&api_key=${apiKey}`);
+    const data = await response.json();
+
+    if (data.shopping_results) {
+        const products = data.shopping_results.map((product: any) => ({
+            name: product.title,
+            price: parseFloat(product.price.replace('$', '')),
+            imageUrl: product.thumbnail,
+            productUrl: product.link,
+          }));
+      allProducts.push(...products);
+    }
   }
 
-  return data.products.map((product: any) => ({
-    name: product.title,
-    price: product.price,
-    imageUrl: product.image,
-    productUrl: product.link,
-  }));
+  return allProducts;
 });
 
 const mapIngredientsToWalmartProductsPrompt = ai.definePrompt({
   name: 'mapIngredientsToWalmartProductsPrompt',
   input: {schema: MapIngredientsToWalmartProductsInputSchema},
   output: {schema: MapIngredientsToWalmartProductsOutputSchema},
-  prompt: `You are an AI assistant that maps ingredients to products available at Walmart using the available tools.
+  prompt: `You are an AI assistant that maps ingredients to products available at Walmart using the available tools. For each ingredient, find the best matching product.
 
   Map the following ingredients to products available at Walmart:
 
@@ -90,14 +95,8 @@ const mapIngredientsToWalmartProductsFlow = ai.defineFlow(
     outputSchema: MapIngredientsToWalmartProductsOutputSchema,
   },
   async input => {
-    const products: any[] = [];
-    for (const ingredient of input.ingredients) {
-      const walmartProducts = await getWalmartProducts({query: ingredient});
-      if (walmartProducts && walmartProducts.length > 0) {
-        products.push(...walmartProducts);
-      }
-    }
-
-    return {products};
+    const result = await mapIngredientsToWalmartProductsPrompt(input);
+    const products = result.output?.products || [];
+    return { products };
   }
 );
